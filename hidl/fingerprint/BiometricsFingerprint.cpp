@@ -203,6 +203,18 @@ Return<uint64_t> BiometricsFingerprint::preEnroll()  {
     return mDevice->pre_enroll(mDevice);
 }
 
+Return<void> BiometricsFingerprint::onShowUdfpsOverlay() {
+    this->mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 1);
+    return Void();
+}
+
+Return<void> BiometricsFingerprint::onHideUdfpsOverlay() {
+    mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 0);
+    mVendorDisplayService->setMode(OP_DISPLAY_AOD_MODE, 0);
+    mVendorDisplayService->setMode(OP_DISPLAY_NOTIFY_PRESS, 0);
+    return Void();
+}
+
 Return<RequestStatus> BiometricsFingerprint::enroll(const hidl_array<uint8_t, 69>& hat,
         uint32_t gid, uint32_t timeoutSec) {
     mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 1);
