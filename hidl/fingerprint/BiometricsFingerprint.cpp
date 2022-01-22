@@ -35,9 +35,12 @@
 #define OP_DISPLAY_SET_DIM 10
 
 #define POWER_STATUS_PATH "/sys/class/drm/card0-DSI-1/power_status"
+#define AUTH_STATUS_PATH   "/sys/class/drm/card0-DSI-1/auth_status"
+#define CANCEL_STATUS_PATH "/sys/class/drm/card0-DSI-1/cancel_status"
+
+int isCancelled = 0;
 
 namespace {
-
 /*
  * Write value to path and close file.
  */
@@ -95,14 +98,13 @@ Return<bool> BiometricsFingerprint::isUdfps(uint32_t) {
 }
 
 Return<void> BiometricsFingerprint::onFingerDown(uint32_t, uint32_t, float, float) {
-    mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 1);
     mVendorDisplayService->setMode(OP_DISPLAY_NOTIFY_PRESS, 1);
 
     return Void();
 }
 
 Return<void> BiometricsFingerprint::onFingerUp() {
-    mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 0);
+    isCancelled = 0;
     mVendorDisplayService->setMode(OP_DISPLAY_NOTIFY_PRESS, 0);
 
     return Void();
@@ -227,9 +229,11 @@ Return<uint64_t> BiometricsFingerprint::getAuthenticatorId() {
 }
 
 Return<RequestStatus> BiometricsFingerprint::cancel() {
+    isCancelled = 1;
     mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 0);
     mVendorFpService->updateStatus(OP_FINISH_FP_ENROLL);
     mVendorFpService->updateStatus(OP_ENABLE_FP_LONGPRESS);
+    set(CANCEL_STATUS_PATH, 1);
 
     return ErrorFilter(mDevice->cancel(mDevice));
 }
@@ -261,7 +265,11 @@ Return<RequestStatus> BiometricsFingerprint::authenticate(uint64_t operationId,
     set(POWER_STATUS_PATH, 1);
     mVendorDisplayService->setMode(OP_DISPLAY_NOTIFY_PRESS, 0);
     mVendorDisplayService->setMode(OP_DISPLAY_AOD_MODE, 0);
-    mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 1);
+    set(CANCEL_STATUS_PATH, 0);
+    if (isCancelled)
+        mVendorDisplayService->setMode(OP_DISPLAY_SET_DIM, 1);
+    else
+        set(AUTH_STATUS_PATH, 1);
     mVendorFpService->updateStatus(OP_ENABLE_FP_LONGPRESS);
 
     return ErrorFilter(mDevice->authenticate(mDevice, operationId, gid));
