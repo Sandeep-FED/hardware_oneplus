@@ -156,6 +156,12 @@ FingerprintError BiometricsFingerprint::VendorErrorFilter(int32_t error,
     }
     ALOGE("Unknown error from fingerprint vendor library: %d", error);
     return FingerprintError::ERROR_UNABLE_TO_PROCESS;
+
+Return<void> BiometricsFingerprint::onError(uint64_t deviceId, FingerprintError error,
+                                            int32_t vendorCode) {
+    setDimlayerHbm(0);
+    setFpPress(0);
+    return mClientCallback->onError(deviceId, error, vendorCode);
 }
 
 // Translate acquired messages returned by traditional HAL (see fingerprint.h)
