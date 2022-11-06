@@ -263,7 +263,6 @@ Return<RequestStatus> BiometricsFingerprint::authenticate(uint64_t operationId,
     set(POWER_STATUS_PATH, 1);
     mVendorDisplayService->setMode(OP_DISPLAY_NOTIFY_PRESS, 0);
     mVendorDisplayService->setMode(OP_DISPLAY_AOD_MODE, 0);
-    set(CANCEL_STATUS_PATH, 0);
     mVendorFpService->updateStatus(OP_ENABLE_FP_LONGPRESS);
 
     return ErrorFilter(mDevice->authenticate(mDevice, operationId, gid));
